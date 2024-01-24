@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Line Chart</title>
+    <style>
+     body {
+  width: 100vw;
+  font-family: Arial, Helvetica, sans-serif;
+  background-color: #f7f7f7;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  overflow: auto;
+}
+
+rect, line {
+  cursor: crosshair;
+  stroke: black;
+  fill: none;
+  stroke-width: 2;
+  fill-opacity: 0.7;
+}
+
+#tableContainer {
+  width: 80vw;
+  height: fit-content;
+}
+
+.beautiful-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.beautiful-table th, .beautiful-table td {
+  border: 1px solid #0f0505;
+  padding: 12px;
+  text-align: left;
+}
+
+.beautiful-table th {
+  background-color: #f2f2f2;
+}
+
+.beautiful-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.beautiful-table tr:hover {
+  background-color: #e6f7ff;
+}
+
+.chart-container {
+  width: 100vw;
+  min-height: 400px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+  overflow: visible;
+}
+
+.chart-header {
+  background-color: #2db950;
+  color: #fff;
+  padding: 15px;
+  text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+  border-radius: 8px 8px 0 0;
+}
+
+.chart-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 15px;
+  margin-bottom: 5px;
+  background-color: #fff;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+button {
+  padding: 10px;
+  background-color: #4caf50;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 10px;
+  transition: background-color 0.3s;
+}
+
+.loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20px;
+  font-size: 18px;
+}
+
+.loading-indicator {
+  display: none;
+  color: #4caf50;
+  margin-left: 10px;
+  font-weight: bold;
+}
+
+button:hover {
+  background-color: #45a049;
+}
+
+input[type="date"], input[type="text"] {
+  padding: 8px;
+  margin-left: 10px;
+  border-radius: 4px;
+  border: 1px solid #0f0505;
+  transition: border-color 0.3s ease;
+}
+
+input[type="date"]:focus, input[type="text"]:focus, select:focus {
+  border-color: #2db950;
+}
+
+select {
+  padding: 8px;
+  margin: 0 10px;
+  color: #28cf12;
+}
+
+canvas {
+  background-color: #96c790;
+  width: 100%;
+  height: fit-content;
+}
+
+.login-container {
+  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  width: 300px;
+  margin-top: 200px;
+  animation: fadeIn 2s ease-out;
+}
+
+.login-container h2 {
+  color: #2db950;
+  margin-bottom: 20px;
+}
+
+.login-container label {
+  display: block;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.login-container input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 16px;
+  box-sizing: border-box;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.login-container button {
+  background-color: #2db950;
+  color: #fff;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+.login-container button:hover {
+  background-color: #238c43;
+}
+
+#loginStatus {
+  color: #d9534f;
+  margin-top: 10px;
+}
+
+#mainContent {
+  animation: fadeIn 1.5s ease-in-out;
+  display: none;
+}
+
+.search-dropdown {
+  position: relative;
+  display: inline-block;
+  left: 10%;
+  top: 2%;
+}
+
+.search-input {
+  padding: 10px;
+  width: 400px;
+}
+
+.search-results {
+  list-style-type: none;
+  padding: 0;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  max-height: 150px;
+  overflow-y: auto;
+  display: none;
+}
+
+.search-results li {
+  padding: 8px;
+  cursor: pointer;
+  width: 400px;
+}
+
+.search-results li:hover {
+  background-color: #f4f4f4;
+}
+
+.search-results.show {
+  display: block;
+}
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/Chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/0.7.8/chartjs-plugin-zoom.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+  </head>
+
+  <body>
+    <div class="login-container">
+      <h2>Login</h2>
+      <label for="email">Email:</label>
+      <input type="email" id="email" required />
+
+      <label for="password">Password:</label>
+      <input type="password" id="password" required />
+
+      <button onclick="login()">Login</button>
+      <p id="loginStatus"></p>
+    </div>
+
+    <div id="mainContent" style="display: none">
+      <div class="search-dropdown">
+        <input
+          type="file"
+          id="fileSE"
+          accept=".csv"
+          onchange="fileSelected(event)"
+        />
+      </div>
+
+      <div
+        style="position: relative; font-size: xx-large; color: #2db950"
+        id="Error"
+      ></div>
+      <!-- Create a canvas element to render the chart -->
+      <div class="chart-container" id="DDDD" style="visibility: visible">
+        <div class="chart-header">Line Chart CSV File Only</div>
+        <div class="chart-controls">
+          <button onclick="DrawToolActive(1700,720)">Enable Live tools</button>
+          <button onclick="DrawToolActiveClear()" style="margin-left: 0.4rem">
+            Clear
+          </button>
+
+          <button
+            type="button"
+            onclick="generateDateChart()"
+            style="margin-left: 0.4rem"
+          >
+            Generate Date Chart
+          </button>
+          <button
+            style="margin-left: 0.4rem; visibility: hidden"
+            id="drawRectangleBtn"
+          >
+            Draw Rectangle
+          </button>
+          <button
+            style="margin-left: 0.4rem; visibility: hidden"
+            id="drawLineBtn"
+          >
+            Draw Line
+          </button>
+          <div id="loadingIndicator" class="loading-indicator">
+            Wait, Chart is Loading...
+          </div>
+        </div>
+        <!-- style="position: relative; z-index: 1" -->
+        <div width="1000" height="400" style="position: relative; z-index: 1">
+          <canvas id="lineChart"></canvas>
+          <div style="max-width: 1000px; margin: 20px auto">
+            <canvas
+              id="volumeChart"
+              width="400"
+              height="200"
+              style="background-color: white"
+            ></canvas>
+          </div>
+          <div
+            id="chart-containerdraw"
+            style="position: absolute; top: 0; left: 0; z-index: 2"
+          ></div>
+        </div>
+      </div>
+      <div id="tableContainer" style="visibility: visible">
+        <table id="dataTable" class="beautiful-table">
+          <!-- Table header -->
+          <thead>
+            <tr style="color: #c05656">
+              <th>Date</th>
+              <th>Value</th>
+              <th>Loss/Profit</th>
+              <th>Monowave</th>
+              <th>Retracement (%)M1</th>
+              <th>Retracement (%)M1 - 1</th>
+            </tr>
+          </thead>
+          <!-- Table body will be dynamically generated using JavaScript -->
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <script>
+      let EmptyArray;
+      function fileSelected(event) {
+        const selectedFile = event.target.files[0];
+
+        if (selectedFile) {
+          const reader = new FileReader();
+
+          reader.onload = function (e) {
+            const csvData = e.target.result;
+
+            Papa.parse(csvData, {
+              header: true,
+              dynamicTyping: true,
+              complete: function (results) {
+                EmptyArray = results.data;
+              },
+            });
+          };
+
+          reader.readAsText(selectedFile);
+        } else {
+        }
+      }
+      function createVolumeChart(volumeArray, volumeDataArray) {
+        const volumeData = {
+          labels: volumeDataArray.map((date) => date),
+          datasets: [
+            {
+              label: "Volume",
+              data: volumeArray.map((volumeData) => volumeData),
+              backgroundColor: "rgba(75, 192, 192, 0.2)",
+              borderColor: "rgba(75, 192, 192, 1)",
+              borderWidth: 1,
+            },
+          ],
+        };
+
+        const ctx = document.getElementById("volumeChart").getContext("2d");
+        const existingChart = Chart.getChart(ctx);
+
+        if (existingChart) {
+          existingChart.destroy();
+        }
+        const myChart = new Chart(ctx, {
+          type: "bar",
+          data: volumeData,
+          options: {
+            scales: {
+              x: {
+                type: "category",
+                position: "bottom",
+              },
+              y: {
+                beginAtZero: false,
+                // Specify the step size for y-axis ticks
+                stepSize: 1000,
+                ticks: {
+                  callback: function (value) {
+                    return value.toLocaleString();
+                  },
+                },
+                title: {
+                  display: true,
+                  text: "Volume",
+                },
+                grid: {
+                  display: true,
+                },
+              },
+            },
+            plugins: {
+              zoom: {
+                zoom: {
+                  wheel: {
+                    enabled: true,
+                  },
+                  pinch: {
+                    enabled: true,
+                  },
+                  mode: "y",
+                },
+                pan: {
+                  enabled: true,
+                  mode: "y",
+                },
+              },
+            },
+          },
+        });
+      }
+
+      let VALOFDRAWINGCHART;
+      function login() {
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+        if (
+          (email === "harshadmashru@gmail.com" ||
+            email === "divyeshbarvadiya6@gmail.com") &&
+          (password === "Harshad@4172" || password === "9572")
+        ) {
+          sessionStorage.setItem("email", email);
+          sessionStorage.setItem("password", password);
+          setTimeout(() => {
+            document.querySelector(".login-container").style.display = "none";
+            document.getElementById("mainContent").style.display = "block";
+          }, 100);
+        } else {
+          document.getElementById("loginStatus").textContent =
+            "Invalid email or password. Please try again.";
+        }
+      }
+      window.onload = function () {
+        document.getElementById("fileSE").value = null;
+        const isAuthenticated = sessionStorage.getItem("email");
+        if (isAuthenticated) {
+          document.getElementById("loginStatus").textContent =
+            "You are already logged in.";
+          document.querySelector(".login-container").style.display = "none";
+          document.getElementById("mainContent").style.display = "block";
+        }
+      };
+      let openPrices = new Array();
+      let LabelsArray = new Array();
+      let rectangles = []; // New array to store rectangles
+      let a = document.getElementById("Attached");
+      let cd = document.getElementById("Error");
+      let chartContainer = document.getElementById("chart-containerdraw");
+
+      // Function to toggle the visibility of drawing tools
+
+      function fillTable(
+        dateArrayReceive,
+        openPrices,
+        lossProfitArray,
+        MonowaveArray,
+        newRetracementArray,
+        extraDateAddedIndex,
+        extraDateAddedDate,
+        Retracement2
+      ) {
+        const dateArray = dateArrayReceive.map(
+          (dateString) => new Date(dateString)
+        );
+
+        let FinalArray = new Array();
+        let a = 0;
+        for (let i = 0; i < openPrices.length; i++) {
+          if (a == extraDateAddedIndex * 2) {
+            a = a + 2;
+          }
+          FinalArray[a] = {
+            date: dateArrayReceive[i],
+            price: openPrices[i],
+            lossprofit: lossProfitArray[i],
+            monowave: MonowaveArray[i],
+            retracement: newRetracementArray[i],
+            retracement1: Retracement2[i],
+          };
+          a++;
+        }
+
+        const tableBody = document.getElementById("tableBody");
+
+        // Clear previous table content
+        tableBody.innerHTML = "";
+
+        // Iterate through the dateArray and create a row for each date
+        FinalArray.forEach((date, index) => {
+          const row = document.createElement("tr");
+
+          // Add date cell
+          const dateCell = document.createElement("td");
+          dateCell.textContent = date.date.toLocaleDateString();
+          row.appendChild(dateCell);
+
+          // Add value, loss/profit, monowave, and retracement cells (you can replace these with your actual data)
+
+          const valueCell = document.createElement("td");
+          if (date.price == "EMpty" || date.price == "Holiday") {
+            if (date.price == "Holiday") {
+              valueCell.textContent = "Holiday";
+            } else {
+              valueCell.textContent = "";
+            }
+          } else {
+            let FinalPrice = parseFloat(date.price.toFixed(3));
+            valueCell.textContent = FinalPrice;
+          }
+          row.appendChild(valueCell);
+
+          const lossProfitCell = document.createElement("td");
+          if (date.lossprofit == "EMpty" || date.lossprofit == "Holiday") {
+            if (date.lossprofit == "Holiday") {
+              lossProfitCell.textContent = "Holiday";
+            } else {
+              lossProfitCell.textContent = "";
+            }
+          } else {
+            let FinalPrice = parseFloat(date.lossprofit.toFixed(3));
+
+            lossProfitCell.textContent = FinalPrice;
+          }
+          row.appendChild(lossProfitCell);
+
+          const monowaveCell = document.createElement("td");
+          if (date.monowave == "EMpty" || date.monowave == "Holiday") {
+            if (date.monowave == "Holiday") {
+              monowaveCell.textContent = "Holiday";
+            } else {
+              monowaveCell.textContent = "";
+            }
+          } else {
+            let FinalPrice = Math.abs(parseFloat(date.monowave.toFixed(3)));
+
+            monowaveCell.textContent = FinalPrice;
+          }
+          row.appendChild(monowaveCell);
+
+          const retracementCell = document.createElement("td");
+          if (date.retracement == "EMpty" || date.retracement == "Holiday") {
+            if (date.retracement == "Holiday") {
+              retracementCell.textContent = "Holiday";
+            } else {
+              retracementCell.textContent = "";
+            }
+          } else {
+            let FinalPrice = parseFloat(date.retracement.toFixed(3));
+
+            retracementCell.textContent = `${FinalPrice}(%)`;
+          }
+          row.appendChild(retracementCell);
+
+          const retracementCell1 = document.createElement("td");
+          if (date.retracement1 == "EMpty" || date.retracement1 == "Holiday") {
+            if (date.retracement1 == "Holiday") {
+              retracementCell1.textContent = "Holiday";
+            } else {
+              retracementCell1.textContent = "";
+            }
+          } else {
+            let FinalPrice = parseFloat(date.retracement1.toFixed(3));
+
+            retracementCell1.textContent = `${FinalPrice}(%)`;
+          }
+          row.appendChild(retracementCell1);
+
+          // Append the row to the table body
+          tableBody.appendChild(row);
+        });
+      }
+      function drawLineChart() {
+        document.getElementById("loadingIndicator").style.display = "block"; // Show loading indicator
+        const canvas = document.getElementById("lineChart");
+        let FinalnewEmptyArray = new Array();
+        let EmptyArrayIndex = 0;
+        console.log(EmptyArray);
+        if (EmptyArray) {
+          function convertDateFormat(inputDate) {
+            const monthAbbreviations = {
+              JAN: "01",
+              FEB: "02",
+              MAR: "03",
+              APR: "04",
+              MAY: "05",
+              JUN: "06",
+              JUL: "07",
+              AUG: "08",
+              SEP: "09",
+              OCT: "10",
+              NOV: "11",
+              DEC: "12",
+            };
+
+            const [day, monthAbbr, year] = inputDate.split("-");
+
+            const month = monthAbbreviations[monthAbbr];
+
+            const formattedDate = `${year}-${month}-${day}`;
+
+            return formattedDate;
+          }
+          newEmptyArray = EmptyArray.map((data, i) => {
+            if (data["Date "] != null) {
+              return convertDateFormat(data["Date "]);
+            }
+          });
+          console.log(newEmptyArray);
+
+          for (let i = 0; i < newEmptyArray.length; i++) {
+            FinalnewEmptyArray[i] = {
+              Date: newEmptyArray[i],
+              Close: EmptyArray[i]["Close "],
+              Open: EmptyArray[i]["Open "],
+              High: EmptyArray[i]["High "],
+              Low: EmptyArray[i]["Low "],
+              Volume: EmptyArray[i]["Turnover (₹ Cr)"],
+              "Adj Close": EmptyArray[i]["Close "],
+            };
+          }
+
+          FinalnewEmptyArray.sort((a, b) => {
+            const dateA = new Date(a.Date);
+            const dateB = new Date(b.Date);
+
+            return dateA - dateB;
+          });
+        }
+        console.log(FinalnewEmptyArray);
+
+        openPrices = new Array();
+        const newDates = new Array();
+        let lossProfitArray = new Array();
+        let volumeArray = new Array();
+        let volumeDataArray = new Array();
+        let volumeArrayIdx = 0;
+        let volumeDataArrayIdx = 0;
+        let filllossProfitArray = 0;
+        let BIGCOUNTER = 0;
+        let ss = 0;
+        let a = 0;
+        let filler = 1;
+        let YYYY = 1;
+        let MonowaveArray = new Array();
+        let Run = 1;
+        let fillMonowaveArray = 1;
+        MonowaveArray[0] = "EMpty";
+        let plus_sum = 0;
+        let minus_sum = 0;
+        let extraDateAddedIndex = -1;
+        let extraDateAddedDate;
+
+        for (let i = 0; i < FinalnewEmptyArray.length; i++) {
+          if (FinalnewEmptyArray[i]["Open"] == "null") {
+            extraDateAddedIndex = i;
+            extraDateAddedDate = new Date(FinalnewEmptyArray[i]["Date"]);
+            continue;
+          }
+          volumeArray[volumeArrayIdx] = FinalnewEmptyArray[i]["Volume"];
+          volumeArrayIdx++;
+          volumeDataArray[volumeDataArrayIdx] = FinalnewEmptyArray[i]["Date"];
+          volumeDataArrayIdx++;
+          newDates[ss] = new Date(FinalnewEmptyArray[i]["Date"]);
+          ss++;
+          newDates[ss] = new Date(FinalnewEmptyArray[i]["Date"]);
+          ss++;
+          let open = parseFloat(FinalnewEmptyArray[i]["Open"]);
+          let close = parseFloat(FinalnewEmptyArray[i]["Close"]);
+          if (open > close) {
+            openPrices[a] = parseFloat(FinalnewEmptyArray[i]["High"]);
+            a++;
+            openPrices[a] = parseFloat(FinalnewEmptyArray[i]["Low"]);
+            a++;
+          } else if (open < close) {
+            openPrices[a] = parseFloat(FinalnewEmptyArray[i]["Low"]);
+            a++;
+            openPrices[a] = parseFloat(FinalnewEmptyArray[i]["High"]);
+            a++;
+          } else {
+            openPrices[a] = parseFloat(FinalnewEmptyArray[i]["Low"]);
+            a++;
+            openPrices[a] = parseFloat(FinalnewEmptyArray[i]["High"]);
+            a++;
+          }
+          if (i == 0) {
+            lossProfitArray[filllossProfitArray] = "EMpty";
+            filllossProfitArray++;
+          } else {
+            lossProfitArray[filllossProfitArray] =
+              openPrices[filler] - openPrices[filler - 1];
+            filler++;
+            filllossProfitArray++;
+            lossProfitArray[filllossProfitArray] =
+              openPrices[filler] - openPrices[filler - 1];
+            filler++;
+            filllossProfitArray++;
+          }
+        }
+
+        lossProfitArray[filllossProfitArray] =
+          openPrices[filler] - openPrices[filler - 1];
+
+        // Fill the monoWave Array
+
+        while (Run < lossProfitArray.length) {
+          if (lossProfitArray[Run] > 0) {
+            let start = Run;
+            let end = Run;
+            let sum = 0;
+            let a = end;
+            while (lossProfitArray[end] > 0) {
+              if (a != end) {
+                MonowaveArray[fillMonowaveArray] = "EMpty";
+                fillMonowaveArray++;
+              }
+              sum += lossProfitArray[end];
+              end++;
+            }
+            if (sum == 0) {
+              sum = Math.abs(lossProfitArray[start]);
+            }
+            MonowaveArray[fillMonowaveArray] = Math.abs(sum);
+            fillMonowaveArray++;
+            Run = end;
+          } else if (lossProfitArray[Run] < 0) {
+            let start = Run;
+            let end = Run;
+            let sum = 0;
+            let a = end;
+            while (lossProfitArray[end] < 0) {
+              if (a != end) {
+                MonowaveArray[fillMonowaveArray] = "EMpty";
+                fillMonowaveArray++;
+              }
+              sum += lossProfitArray[end];
+              end++;
+            }
+            if (sum == 0) {
+              sum = Math.abs(lossProfitArray[start]);
+            }
+            MonowaveArray[fillMonowaveArray] = Math.abs(sum);
+            fillMonowaveArray++;
+            Run = end;
+          } else {
+            MonowaveArray[fillMonowaveArray] = "EMpty";
+            fillMonowaveArray++;
+            Run++;
+          }
+        }
+
+        let index = 0;
+        for (let i = 0; i < MonowaveArray.length; i++) {
+          if (MonowaveArray[i] != "EMpty") {
+            index = i;
+            break;
+          }
+        }
+
+        //Retracement
+        LabelsArray = new Array();
+        let Retracement2 = new Array();
+        let dddd = 0;
+        let RetracementArray = new Array();
+
+        for (let i = 0; i <= index; i++) {
+          RetracementArray[i] = "EMpty";
+          Retracement2[i] = "EMpty";
+          LabelsArray[dddd] = {
+            date: newDates[i],
+            persontage: "",
+            value: openPrices[i],
+          };
+          dddd++;
+        }
+
+        Retracement2[index + 1] = "EMpty";
+        for (let i = index + 2; i < MonowaveArray.length; i++) {
+          if (MonowaveArray[i] == "EMpty") {
+            Retracement2[i] = "EMpty";
+          } else {
+            let find = i - 1;
+            while (MonowaveArray[find] == "EMpty") {
+              find--;
+            }
+            let a = find - 1;
+            while (MonowaveArray[a] == "EMpty") {
+              a--;
+            }
+            if (MonowaveArray[a] == undefined) {
+              Retracement2[i] = "EMpty";
+            } else {
+              Retracement2[i] = Math.abs(
+                (MonowaveArray[i] * 100) / MonowaveArray[a]
+              );
+            }
+          }
+        }
+
+        for (let i = index + 1; i < MonowaveArray.length; i++) {
+          if (MonowaveArray[i] == "EMpty") {
+            RetracementArray[i] = "EMpty";
+            LabelsArray[dddd] = {
+              date: newDates[i],
+              persontage: "",
+              value: openPrices[i],
+            };
+            dddd++;
+          } else {
+            if (MonowaveArray[i - 1] != "EMpty") {
+              RetracementArray[i] = Math.abs(
+                (MonowaveArray[i] * 100) / MonowaveArray[i - 1]
+              );
+              LabelsArray[dddd] = {
+                date: newDates[i],
+                persontage: parseFloat(RetracementArray[i].toFixed(3)),
+                value: openPrices[i],
+              };
+              dddd++;
+            } else {
+              let find = i - 1;
+              while (MonowaveArray[find] == "EMpty") {
+                find--;
+              }
+              RetracementArray[i] = Math.abs(
+                (MonowaveArray[i] * 100) / MonowaveArray[find]
+              );
+              LabelsArray[dddd] = {
+                date: newDates[i],
+                persontage: parseFloat(RetracementArray[i].toFixed(3)),
+                value: openPrices[i],
+              };
+              dddd++;
+            }
+          }
+        }
+
+        LINEDRAWCHART(openPrices, LabelsArray);
+        document.getElementById("loadingIndicator").style.display = "none"; // Hide loading indicator
+        canvas.style.display = "block";
+        createVolumeChart(volumeArray, volumeDataArray);
+        fillTable(
+          newDates,
+          openPrices,
+          lossProfitArray,
+          MonowaveArray,
+          RetracementArray,
+          extraDateAddedIndex,
+          extraDateAddedDate,
+          Retracement2
+        );
+      }
+
+      function LINEDRAWCHART(openPrices, LabelsArray) {
+        const ctx = document.getElementById("lineChart").getContext("2d");
+        document
+          .getElementById("lineChart")
+          .addEventListener("hover", () => {});
+        if (window.myChart) {
+          window.myChart.destroy();
+        }
+        // Create the chart
+        window.myChart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: LabelsArray.map(() => ""), // Empty strings for x-axis labels
+            datasets: [
+              {
+                label: "Value",
+                data: openPrices.map((open) => open),
+                borderColor: "blue",
+                borderWidth: 2,
+                pointBackgroundColor: "black",
+                fill: false,
+                pointRadius: 1,
+                pointHoverRadius: 2,
+                showLine: true,
+              },
+            ],
+          },
+          options: {
+            scales: {
+              x: {
+                ticks: {
+                  callback: function (value, index, values) {
+                    // Use LabelsArray to get the date for x-axis label
+                    const dateString =
+                      LabelsArray[index].date.toLocaleDateString();
+                    return dateString;
+                  },
+                },
+              },
+            },
+            plugins: {
+              tooltip: {
+                zIndex: 1000,
+                callbacks: {
+                  label: function (context) {
+                    const dateObject = LabelsArray[context.dataIndex].date;
+                    const dateString = dateObject.toLocaleDateString();
+                    const percentageValue =
+                      LabelsArray[context.dataIndex].persontage;
+                    const value = parseFloat(
+                      LabelsArray[context.dataIndex].value.toFixed(2)
+                    );
+
+                    if (!percentageValue) {
+                      return `value ${value} date ${dateString}`;
+                    } else {
+                      return `value ${value} date ${dateString} percentage ${percentageValue}%`;
+                    }
+                  },
+                },
+              },
+            },
+          },
+        });
+      }
+
+      function generateDateChart() {
+        drawLineChart();
+      }
+
+      let svg;
+      let currentShape;
+      let ab;
+      let b;
+      function DrawToolActive(w, h) {
+        document.getElementById("drawRectangleBtn").style.visibility =
+          "visible";
+        document.getElementById("drawLineBtn").style.visibility = "visible";
+
+        const width = w;
+        const height = h;
+        svg = d3
+          .select("#chart-containerdraw")
+          .append("svg")
+          .attr("width", width)
+          .attr("height", height);
+
+        let isDrawing = false;
+        currentShape;
+
+        // Function to make the chart container listen for mouse events
+        function enableDrawing(shapeType) {
+          if (isDrawing) {
+            // If already drawing, stop drawing and remove event listeners
+            isDrawing = false;
+            svg.on("mousedown", null);
+            svg.on("mousemove", null);
+            svg.on("mouseup", null);
+
+            // Hide the overlay by setting its opacity to 0
+            d3.select("#overlay").style("opacity", 0);
+
+            return;
+          }
+          // Create a transparent overlay to prevent the drawing tools from capturing events
+          const overlay = svg
+            .append("rect")
+            .attr("id", "overlay")
+            .attr("width", width)
+            .attr("height", height)
+            .attr("fill", "none")
+            // .attr("pointer-events", "all") // Make the overlay clickable
+            .style("opacity", 1);
+          // Initially set opacity to 1
+
+          svg.on("mousedown", function () {
+            isDrawing = true;
+            const [x, y] = d3.mouse(this);
+
+            if (shapeType === "rectangle") {
+              currentShape = svg
+                .append("rect")
+                .attr("x", x)
+                .attr("y", y)
+                .attr("width", 20)
+                .attr("height", 20)
+                .attr("stroke", "black")
+                .attr("stroke-width", 2)
+                .attr("fill", "none");
+              rectangles.push({
+                x: x,
+                y: y,
+                width: 20,
+                height: 20,
+              });
+            } else if (shapeType === "line") {
+              currentShape = svg
+                .append("line")
+                .attr("x1", x)
+                .attr("y1", y)
+                .attr("x2", x + 20)
+                .attr("y2", y)
+                .attr("stroke", "black")
+                .attr("stroke-width", 2);
+            }
+            d3.event.stopPropagation();
+          });
+
+          svg.on("mousemove", function () {
+            if (!isDrawing) return;
+            const [x, y] = d3.mouse(this);
+            ab = x;
+            b = y;
+            if (shapeType === "rectangle") {
+              const width = x - +currentShape.attr("x");
+              const height = y - +currentShape.attr("y");
+              currentShape.attr("width", width).attr("height", height);
+            } else if (shapeType === "line") {
+              currentShape.attr("x2", x).attr("y2", y);
+            }
+            d3.event.stopPropagation();
+          });
+
+          svg.on("mouseup", function () {
+            isDrawing = false;
+
+            // Hide the overlay by setting its opacity to 0 once drawing is completed
+            overlay.style("opacity", 0);
+
+            d3.event.stopPropagation();
+          });
+        }
+
+        // Buttons to enable drawing mode for rectangles and lines
+        d3.select("#drawRectangleBtn").on("click", function () {
+          enableDrawing("rectangle");
+        });
+
+        d3.select("#drawLineBtn").on("click", function () {
+          enableDrawing("line");
+        });
+      }
+      function DrawToolActiveClear() {
+        document.getElementById("drawRectangleBtn").style.visibility = "hidden";
+        document.getElementById("drawLineBtn").style.visibility = "hidden";
+        d3.select("#chart-containerdraw svg").remove();
+        svg.on("mousedown", null);
+        svg.on("mousemove", null);
+        svg.on("mouseup", null);
+        svg.on("mouseover", null);
+        svg.on("mouseout", null);
+        svg.select("#overlay").remove();
+      }
+    </script>
+  </body>
+</html>
